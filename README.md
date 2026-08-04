@@ -2,12 +2,15 @@
 
 World Bank Data360 MCP — the World Bank's modern unified data platform.
 
-Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents to 250+ live data sources.
+Part of [Pipeworx](https://pipeworx.io) — an MCP gateway connecting AI agents to 1394+ live data sources.
 
 ## Tools
 
 | Tool | Description |
 |------|-------------|
+| `data360_list_databases` | List the source databases aggregated by World Bank Data360 (e.g. WB_WDI = World Development Indicators, IMF_BOP = Balance of Payments, WB_EDSTATS = Education Statistics). Returns each DATABASE_ID with its full name and indicator count. Use a DATABASE_ID here to scope data360_search_indicators and data360_get_data. |
+| `data360_search_indicators` | Full-text search across all Data360 indicators (every WDI/IMF/WHO/ILO/education series in one index). Returns indicator codes (use as INDICATOR in data360_get_data), names, owning DATABASE_ID/name, units, and definitions. Optionally restrict to one database with database_id. |
+| `data360_get_data` | Fetch observations for one Data360 series. DATABASE_ID selects the source database (e.g. WB_WDI), INDICATOR is the code from data360_search_indicators (e.g. WB_WDI_SP_POP_TOTL), REF_AREA is an ISO3 country code (e.g. BRA, USA). Returns SDMX-style records with OBS_VALUE, TIME_PERIOD, UNIT_MEASURE and disaggregation attributes (SEX, AGE, etc.). Omit TIME_PERIOD for the full series. |
 
 ## Quick Start
 
@@ -23,7 +26,7 @@ Add to your MCP client (Claude Desktop, Cursor, Windsurf, etc.):
 }
 ```
 
-Or connect to the full Pipeworx gateway for access to all 250+ data sources:
+Or connect to the full Pipeworx gateway for access to all 1394+ data sources:
 
 ```json
 {
@@ -47,7 +50,7 @@ The gateway picks the right tool and fills the arguments automatically.
 
 ## More
 
-- [All tools and guides](https://github.com/pipeworx-io/examples)
+- [Docs and guides](https://pipeworx.io/docs)
 - [pipeworx.io](https://pipeworx.io)
 
 ## License
