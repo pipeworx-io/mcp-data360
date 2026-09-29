@@ -796,7 +796,39 @@ async function callTool(name: string, args: Record<string, unknown>): Promise<un
       if (period) params.set('TIME_PERIOD', period);
       params.set('skip', String(numArg(args.skip, 0)));
       params.set('top', String(numArg(args.top, 100)));
-      return get(`/data?${params.toString()}`);
+      const res = await pwFetch(`${BASE}/data?${params.toString()}`, {
+        headers: { Accept: 'application/json', 'User-Agent': UA },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        // Data360 answers an unknown DATABASE_ID with 417 EA500001 "Data
+        // retrieval failed" -- the same body it sends on a real outage, so the
+        // body cannot tell them apart. Check the id against the database list
+        // and only call it not_found when it is genuinely absent (fleet #2497).
+        const dbId = params.get('DATABASE_ID')!;
+        const known = await databaseIds().catch(() => null);
+        if (known && !known.includes(dbId)) {
+          const near = known.find((k) => k.toLowerCase() === dbId.toLowerCase());
+          return {
+            error: 'not_found',
+            message: near
+              ? `Data360 has no database "${dbId}" -- ids are case-sensitive; did you mean "${near}"?`
+              : `Data360 has no database "${dbId}". Call data360_list_databases for valid DATABASE_IDs (e.g. "WB_WDI").`,
+            DATABASE_ID: dbId,
+          };
+        }
+        throw new Error(`Data360: ${res.status} ${text.slice(0, 200)}`);
+      }
+      const data = (await res.json()) as { count?: number; value?: unknown[] };
+      if ((data.count ?? data.value?.length ?? 0) === 0) {
+        // An unknown INDICATOR / REF_AREA pair is a 200 with zero rows, not an error.
+        return {
+          ...data,
+          empty_reason: 'no_match',
+          note: `No observations for INDICATOR "${params.get('INDICATOR')}" in ${params.get('DATABASE_ID')} for REF_AREA "${params.get('REF_AREA')}"${period ? ` in ${period}` : ''}. Check the code with data360_search_indicators (database_id: "${params.get('DATABASE_ID')}"), or drop TIME_PERIOD.`,
+        };
+      }
+      return data;
     }
 
     default:
@@ -814,10 +846,16 @@ async function searchPost(body: unknown): Promise<unknown> {
   return res.json();
 }
 
-async function get(path: string): Promise<unknown> {
-  const res = await pwFetch(`${BASE}${path}`, { headers: { Accept: 'application/json', 'User-Agent': UA } });
-  if (!res.ok) throw new Error(`Data360: ${res.status} ${await res.text().then((t) => t.slice(0, 200))}`);
-  return res.json();
+async function databaseIds(): Promise<string[]> {
+  const res = (await searchPost({
+    count: true,
+    search: '*',
+    top: 0,
+    facets: ['series_description/database_id,count:1000'],
+  })) as any;
+  const ids: Array<{ value: string }> = res?.['@search.facets']?.['series_description/database_id'] ?? [];
+  if (ids.length === 0) throw new Error('Data360 database list came back empty');
+  return ids.map((d) => d.value);
 }
 
 function reqStr(args: Record<string, unknown>, key: string, example: string): string {
