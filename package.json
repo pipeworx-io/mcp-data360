@@ -1,6 +1,6 @@
 {
   "name": "@pipeworx/mcp-data360",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "World Bank Data360 MCP — the World Bank's modern unified data platform.",
   "type": "module",
   "main": "src/index.ts",
@@ -26,7 +26,7 @@
     "@cloudflare/workers-types": "^4.20260405.1"
   },
   "pipeworx": {
-    "sourceHash": "v1-1511cd1832ee85fadcceee3343e69d08d9d9cd3b0ba78476982edcd1ebdfd01c",
-    "sourceCommit": "8355bf3d1eece256a62a89dba2278e7a77bebe07"
+    "sourceHash": "v1-34a1eb8e858469c2e494e4f026e98894fb118cc3cc466fef53043408bb2cecec",
+    "sourceCommit": "01241619b78233fd55d0e3612331499a63f03ae7"
   }
 }
